@@ -2,32 +2,23 @@ from django.shortcuts import render
 from rest_framework.response import Response
 
 from .serializers import *
-from rest_framework import generics
+from rest_framework import generics, status
 
-class HistoryListView(generics.ListCreateAPIView):
+class HistoryMyList(generics.ListCreateAPIView):
+    serializer_class = HistorySer
     queryset = History.objects.all()
+
+class HistoryListView(generics.GenericAPIView):
     serializer_class = HistorySerializer
 
-    def perform_create(self, request):
-        datahistory = {
-            "tweet_id": request.data['tweet_id'],
-            "tweet_text": request.data['tweet_text'],
-            "history_sentimen": [
-                {
-                    "positif": request.data['positif'],
-                    "negatif": request.data['negatif'],
-                    "netral": request.data['netral']
-                }
-            ]
-        }
-
-        serializer = self.serializer_class(data=datahistory, many=True)
-        serializer.is_valid()
-        return Response(responseData)
+    def post(self, request):
+        serializer_class = self.serializer_class(data=request.data)
+        serializer_class.is_valid(raise_exception=True)
+        return Response(serializer_class.data, status=status.HTTP_200_OK)
 
 class HistoryView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = HistorySerializer
-    queryset = History.objects.all()
+    queryset = Sentiment.objects.all()
 
 class SentimenListView(generics.ListCreateAPIView):
     queryset = Sentiment.objects.all()

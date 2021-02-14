@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.contrib import auth
 from .models import History, Sentiment
 
 class SentimenSerializer(serializers.ModelSerializer):
@@ -6,13 +7,32 @@ class SentimenSerializer(serializers.ModelSerializer):
         model = Sentiment
         fields = ('history', 'positif', 'negatif', 'netral')
 
-class HistorySerializer(serializers.ModelSerializer):
+class HistorySer(serializers.ModelSerializer):
     history_sentimen = SentimenSerializer(many=True, read_only=True)
-    tweet_id = serializers.CharField(max_length=255, write_only=True)
+    # tweet_id = serializers.CharField(max_length=255, write_only=True)
 
     class Meta:
         model = History
         fields = ('tweet_id','tweet_text','history_sentimen','created_at')
+
+class HistorySerializer(serializers.ModelSerializer):
+    history_sentimen = SentimenSerializer(many=True, read_only=True)
+    tweet_id = serializers.CharField(max_length=255)
+    tweet_text = serializers.CharField(max_length=255, read_only=True)
+
+    class Meta:
+        model = History
+        fields = ['tweet_id','tweet_text','history_sentimen','created_at']
+
+    def validate(self, attrs):
+        tweet_id = attrs.get('tweet_id', '')
+        tweet_ids = History(tweet_id=tweet_id)
+        return {
+            'tweet_id': tweet_ids.tweet_id,
+            'tweet_text':tweet_ids.tweet_text,
+            'history_sentimen': tweet_ids.history_sentimen
+        }
+        return super().validate(attrs)
 
     # def create(self, validated_data):
     #     sentimens_data = validated_data.pop('history_sentimen')
